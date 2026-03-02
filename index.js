@@ -24,7 +24,7 @@ for (const file of commandFiles) {
     }
 }
 
-client.once('Ready', async () => {
+client.once('ready', async () => {
     console.log(`✅ Bot conectado como ${client.user.tag}`);
 
     // 2. Registrar TODOS los comandos encontrados en Discord
@@ -71,3 +71,4 @@ http.createServer((req, res) => {
     console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
 
 });
+
