@@ -37,6 +37,10 @@ function drawParticles(ctx, particles) {
 }
 
 async function generateSpinGif(options) {
+    console.log(`\n========================================`);
+    console.log(`🚀 INICIANDO RENDERIZADO DE RULETA...`);
+    console.time('⏱️ TIEMPO TOTAL');
+
     const numOptions = options.length;
     const winnerIndex = Math.floor(Math.random() * numOptions);
     const winnerName = options[winnerIndex];
@@ -48,7 +52,7 @@ async function generateSpinGif(options) {
 
     const size = 400;
     
-    // 👑 OPTIMIZACIÓN: CREAMOS UN SOLO LIENZO MAESTRO 👑
+    console.time('  🎨 1. Preparación de Canvas y Encoder');
     const canvas = new Canvas(size, size);
     const ctx = canvas.getContext('2d');
     
@@ -57,24 +61,25 @@ async function generateSpinGif(options) {
     encoder.setRepeat(-1); 
     encoder.setDelay(80);  
     encoder.setQuality(30); 
+    console.timeEnd('  🎨 1. Preparación de Canvas y Encoder');
 
     const totalSpinFrames = 40; 
 
-    // Fase 1: Giro
+    console.time('  🎡 2. Generando Frames de Giro');
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
         const ease = 1 - Math.pow(1 - progress, 4);
         const currentAngle = ease * finalRotation;
 
-        // Le pasamos el ctx a la función, ella lo limpia y dibuja encima
         drawWheelFrame(ctx, options, currentAngle);
         encoder.addFrame(ctx);
     }
+    console.timeEnd('  🎡 2. Generando Frames de Giro');
 
-    // Fase 2: Celebración
     const particles = createParticles();
     const celebrationFrames = 15; 
 
+    console.time('  🎉 3. Generando Frames de Celebración (Confeti)');
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const highlight = (Math.floor(frame / 4) % 2 === 0) ? winnerIndex : -1;
         
@@ -82,9 +87,15 @@ async function generateSpinGif(options) {
         drawParticles(ctx, particles);
         encoder.addFrame(ctx);
     }
+    console.timeEnd('  🎉 3. Generando Frames de Celebración (Confeti)');
 
+    console.time('  💾 4. Compresión Final (Buffer)');
     encoder.finish();
     const buffer = encoder.out.getData();
+    console.timeEnd('  💾 4. Compresión Final (Buffer)');
+
+    console.timeEnd('⏱️ TIEMPO TOTAL');
+    console.log(`========================================\n`);
 
     return { buffer, winnerName };
 }
