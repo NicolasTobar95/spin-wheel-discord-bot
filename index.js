@@ -1,3 +1,7 @@
+// --- PARCHE DE RED PARA RENDER (FORZAR IPv4) ---
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first');
+// --- CÓDIGO NORMAL ---
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
@@ -65,6 +69,15 @@ client.on('error', console.error);
 
 console.log("🔄 Intentando conectar a los servidores de Discord...");
 
+// Timeout de seguridad: Si en 15 segundos no conecta, que tire un error a la consola
+const timeoutAlarma = setTimeout(() => {
+    console.error("🚨 ALERTA: Pasaron 15 segundos y Discord no respondió. La red está bloqueada.");
+}, 15000);
+
+client.once('ready', () => {
+    clearTimeout(timeoutAlarma); // Apagar alarma si conecta bien
+});
+
 client.login(process.env.DISCORD_TOKEN).catch(error => {
     console.error("❌ ERROR CRÍTICO AL CONECTAR:", error);
 });
@@ -77,7 +90,5 @@ http.createServer((req, res) => {
     res.end('Bot de Ruleta Activo\n');
 }).listen(port, () => {
     console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
-
 });
-
 
