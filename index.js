@@ -60,3 +60,13 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+// --- Servidor Web Dummy para Render ---
+const http = require('http');
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot de Ruleta Activo\n');
+}).listen(port, () => {
+    console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
+});
