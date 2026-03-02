@@ -59,7 +59,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(process.env.DISCORD_TOKEN).catch(console.error);
 
 // --- Servidor Web Dummy para Render ---
 const http = require('http');
