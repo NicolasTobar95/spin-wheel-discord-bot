@@ -59,7 +59,15 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN).catch(console.error);
+// --- ACTIVAR DEBUG DE RED ---
+client.on('debug', console.log);
+client.on('error', console.error);
+
+console.log("🔄 Intentando conectar a los servidores de Discord...");
+
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+    console.error("❌ ERROR CRÍTICO AL CONECTAR:", error);
+});
 
 // --- Servidor Web Dummy para Render ---
 const http = require('http');
@@ -71,4 +79,5 @@ http.createServer((req, res) => {
     console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
 
 });
+
 
