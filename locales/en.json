@@ -1,0 +1,11 @@
+{
+  "alreadySpinning": "⏳ There is already a wheel spinning in this channel. Please wait.",
+  "minOptions": "❌ You need at least 2 options to spin the wheel.",
+  "maxOptions": "❌ The maximum is 20 options so the wheel remains readable.",
+  "formatError": "❌ Format error in **\"{opt}\"**. You must put a number greater than 0 at the end (Ex: Carlos 3).",
+  "initialSpinning": "🎡 Spinning the wheel for: **{options}**...",
+  "calculating": "🎡 Calculating weighted probabilities and spinning...",
+  "spinning": "🎡 **The wheel is spinning!** Good luck everyone!\n\n📋 **Possible outcomes:** {options}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+  "winner": "🎉 The wheel has spun!\n🎯 **Definitive winner:** `{winner}`",
+  "criticalError": "❌ There was a critical error generating the wheel."
+}
