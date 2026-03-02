@@ -1,6 +1,6 @@
 const GIFEncoder = require('gif-encoder-2');
 const { Canvas } = require('skia-canvas');
-const { createWheelSprite, createWeightedWheelSprite, drawStaticOverlay, GLOBAL_COLORS } = require('./wheelGenerator.js');
+const { createWheelSprite, createWeightedWheelSprite, createStaticOverlaySprite, GLOBAL_COLORS } = require('./wheelGenerator.js');
 
 function createParticles() {
     const particles = [];
@@ -11,7 +11,8 @@ function createParticles() {
             vx: (Math.random() - 0.5) * 35, 
             vy: (Math.random() - 0.5) * 35 - 5, 
             color: colors[Math.floor(Math.random() * colors.length)],
-            size: Math.random() * 6 + 4, rotation: Math.random() * 360, rv: (Math.random() - 0.5) * 15
+            size: Math.random() * 6 + 4
+            // (Rotación eliminada para ahorrar 2,250 cálculos por frame)
         });
     }
     return particles;
@@ -19,19 +20,18 @@ function createParticles() {
 
 function drawParticles(ctx, particles) {
     particles.forEach(p => {
-        p.x += p.vx; p.y += p.vy; p.vy += 1.5; p.rotation += p.rv;
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
+        p.x += p.vx; 
+        p.y += p.vy; 
+        p.vy += 1.5; 
         ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-        ctx.restore();
+        // Dibujo directo sin save(), translate() ni rotate()
+        ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
     });
 }
 
 async function generateSpinGif(options) {
     console.log(`\n========================================`);
-    console.log(`🚀 INICIANDO RENDERIZADO CACHEADO...`);
+    console.log(`🚀 RENDERIZADO EXTREMO (ANTI-THROTTLING)...`);
     console.time('⏱️ TIEMPO TOTAL');
 
     const numOptions = options.length;
@@ -48,6 +48,7 @@ async function generateSpinGif(options) {
     console.time('  📸 1. Tomando fotos de Sprites');
     const normalSprite = createWheelSprite(options, -1);
     const highlightSprite = createWheelSprite(options, winnerIndex);
+    const overlaySprite = createStaticOverlaySprite();
     console.timeEnd('  📸 1. Tomando fotos de Sprites');
     
     const canvas = new Canvas(size, size);
@@ -56,10 +57,10 @@ async function generateSpinGif(options) {
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1); 
-    encoder.setDelay(80);  
+    encoder.setDelay(100);  // 10 FPS
     encoder.setQuality(30); 
 
-    const totalSpinFrames = 40; 
+    const totalSpinFrames = 25; // Reducido a 25 frames
 
     console.time('  🎡 2. Pegando Sprites de Giro');
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
@@ -76,17 +77,17 @@ async function generateSpinGif(options) {
         ctx.drawImage(normalSprite, -size/2, -size/2);
         ctx.restore();
 
-        drawStaticOverlay(ctx); 
+        ctx.drawImage(overlaySprite, 0, 0); 
         encoder.addFrame(ctx);
     }
     console.timeEnd('  🎡 2. Pegando Sprites de Giro');
 
     const particles = createParticles();
-    const celebrationFrames = 15; 
+    const celebrationFrames = 10; // Reducido a 10 frames
 
     console.time('  🎉 3. Pegando Sprites de Celebración');
     for (let frame = 0; frame < celebrationFrames; frame++) {
-        const isFlashing = (Math.floor(frame / 4) % 2 === 0);
+        const isFlashing = (Math.floor(frame / 2) % 2 === 0);
         const activeSprite = isFlashing ? highlightSprite : normalSprite;
         
         ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
@@ -98,7 +99,7 @@ async function generateSpinGif(options) {
         ctx.drawImage(activeSprite, -size/2, -size/2);
         ctx.restore();
 
-        drawStaticOverlay(ctx);
+        ctx.drawImage(overlaySprite, 0, 0);
         drawParticles(ctx, particles);
         
         encoder.addFrame(ctx);
@@ -147,6 +148,7 @@ async function generateWeightedSpinGif(parsedOptions) {
     
     const normalSprite = createWeightedWheelSprite(sectors, -1);
     const highlightSprite = createWeightedWheelSprite(sectors, winnerIndex);
+    const overlaySprite = createStaticOverlaySprite();
     
     const canvas = new Canvas(size, size);
     const ctx = canvas.getContext('2d');
@@ -154,10 +156,10 @@ async function generateWeightedSpinGif(parsedOptions) {
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1);
-    encoder.setDelay(80);
+    encoder.setDelay(100);
     encoder.setQuality(30);
 
-    const totalSpinFrames = 40; 
+    const totalSpinFrames = 25; 
 
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
@@ -173,15 +175,15 @@ async function generateWeightedSpinGif(parsedOptions) {
         ctx.drawImage(normalSprite, -size/2, -size/2);
         ctx.restore();
 
-        drawStaticOverlay(ctx);
+        ctx.drawImage(overlaySprite, 0, 0);
         encoder.addFrame(ctx);
     }
 
     const particles = createParticles();
-    const celebrationFrames = 15;
+    const celebrationFrames = 10;
 
     for (let frame = 0; frame < celebrationFrames; frame++) {
-        const isFlashing = (Math.floor(frame / 4) % 2 === 0);
+        const isFlashing = (Math.floor(frame / 2) % 2 === 0);
         const activeSprite = isFlashing ? highlightSprite : normalSprite;
         
         ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
@@ -193,7 +195,7 @@ async function generateWeightedSpinGif(parsedOptions) {
         ctx.drawImage(activeSprite, -size/2, -size/2);
         ctx.restore();
 
-        drawStaticOverlay(ctx);
+        ctx.drawImage(overlaySprite, 0, 0);
         drawParticles(ctx, particles);
         
         encoder.addFrame(ctx);

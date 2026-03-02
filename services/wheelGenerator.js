@@ -89,7 +89,7 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         ctx.shadowBlur = 0;
     }
 
-    const yOffset = 0; // Mantenemos la corrección visual de los 3px
+    const yOffset = 0; 
 
     if (lines.length === 1) {
         ctx.fillText(lines[0], baseX, yOffset); 
@@ -108,7 +108,6 @@ function createWheelSprite(options, highlightIndex = -1) {
     const sectorAngle = (2 * Math.PI) / numOptions;
     const bleed = 6; 
 
-    // 1. Dibujar Sectores de Colores y Textos
     for (let i = 0; i < numOptions; i++) {
         const baseColors = getColorsForIndex(i);
         const isHighlighted = i === highlightIndex;
@@ -146,14 +145,12 @@ function createWheelSprite(options, highlightIndex = -1) {
         ctx.restore();
     }
 
-    // 2. CORRECCIÓN: Dibujar el Borde Exterior en el Sprite antes de los puntos
     ctx.beginPath();
     ctx.arc(0, 0, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
     ctx.lineWidth = SIZES.borderWidth;
     ctx.strokeStyle = GLOBAL_COLORS.outerBorder;
     ctx.stroke();
 
-    // 3. Dibujar los Puntos Blancos (ahora quedan encima del borde, perfectos)
     for (let i = 0; i < numOptions; i++) {
         const startAngle = i * sectorAngle;
         ctx.beginPath();
@@ -163,7 +160,6 @@ function createWheelSprite(options, highlightIndex = -1) {
         ctx.fill();
     }
 
-    // 4. Dibujar el Centro Blanco
     ctx.beginPath();
     ctx.arc(0, 0, SIZES.centerRadius, 0, 2 * Math.PI);
     ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
@@ -220,7 +216,6 @@ function createWeightedWheelSprite(sectors, highlightIndex = -1) {
         ctx.restore();
     }
 
-    // CORRECCIÓN: Borde Exterior
     ctx.beginPath();
     ctx.arc(0, 0, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
     ctx.lineWidth = SIZES.borderWidth;
@@ -247,8 +242,11 @@ function createWeightedWheelSprite(sectors, highlightIndex = -1) {
     return sprite;
 }
 
-// 👑 NUEVA ARQUITECTURA: Capa estática (AHORA SOLO TIENE LA FLECHA INDICADORA)
-function drawStaticOverlay(ctx) {
+// 👑 MODO DIOS: Esta función ahora crea una "foto" solo de la flecha
+function createStaticOverlaySprite() {
+    const sprite = new Canvas(SIZES.canvas, SIZES.canvas);
+    const ctx = sprite.getContext('2d');
+
     const tipX = SIZES.center + SIZES.sliceRadius - 6; 
     const cx = SIZES.center + SIZES.totalRadius + 10;   
     const r = 16; 
@@ -271,6 +269,8 @@ function drawStaticOverlay(ctx) {
     ctx.arc(cx, SIZES.center, 6, 0, 2 * Math.PI);
     ctx.fillStyle = GLOBAL_COLORS.bgDiscord; 
     ctx.fill();
+
+    return sprite;
 }
 
-module.exports = { createWheelSprite, createWeightedWheelSprite, drawStaticOverlay, GLOBAL_COLORS };
+module.exports = { createWheelSprite, createWeightedWheelSprite, createStaticOverlaySprite, GLOBAL_COLORS };
