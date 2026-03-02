@@ -1,4 +1,3 @@
-// Ya no requerimos 'skia-canvas' aquí arriba
 const GLOBAL_COLORS = {
     outerBorder: '#394e63',   
     indicator: '#EBB31C',     
@@ -88,17 +87,18 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         ctx.shadowBlur = 0;
     }
 
+    // 👑 CORRECCIÓN VISUAL 2: Ajuste óptico hacia abajo (3 píxeles)
+    const yOffset = 0; 
+
     if (lines.length === 1) {
-        ctx.fillText(lines[0], baseX, 0); 
+        ctx.fillText(lines[0], baseX, yOffset); 
     } else {
-        ctx.fillText(lines[0], baseX, -lineHeight / 2); 
-        ctx.fillText(lines[1], baseX, lineHeight / 2);  
+        ctx.fillText(lines[0], baseX, (-lineHeight / 2) + yOffset); 
+        ctx.fillText(lines[1], baseX, (lineHeight / 2) + yOffset);  
     }
 }
 
-// OJO AQUÍ: Ahora recibe 'ctx' como primer parámetro
 function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
-    // Sobrescribimos todo el lienzo con blanco (limpieza instantánea)
     ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
     ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
 
@@ -108,6 +108,9 @@ function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
 
     const numOptions = options.length;
     const sectorAngle = (2 * Math.PI) / numOptions;
+    
+    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
+    const bleed = 6; 
 
     for (let i = 0; i < numOptions; i++) {
         const baseColors = getColorsForIndex(i);
@@ -123,21 +126,21 @@ function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.sliceRadius, startAngle, endAngle);
+        ctx.arc(0, 0, SIZES.sliceRadius + bleed, startAngle, endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.mainRadius, startAngle, endAngle);
+        ctx.arc(0, 0, SIZES.mainRadius + bleed, startAngle, endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(SIZES.sliceRadius * Math.cos(startAngle), SIZES.sliceRadius * Math.sin(startAngle));
+        ctx.lineTo((SIZES.sliceRadius + bleed) * Math.cos(startAngle), (SIZES.sliceRadius + bleed) * Math.sin(startAngle));
         ctx.lineWidth = 2;
         ctx.strokeStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.stroke();
@@ -176,10 +179,8 @@ function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
     ctx.stroke();
 
     drawIndicator(ctx);
-    // Ya no hacemos 'return canvas', porque modificamos el ctx original
 }
 
-// OJO AQUÍ: También recibe 'ctx'
 function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = -1) {
     ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
     ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
@@ -187,6 +188,9 @@ function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = 
     ctx.save();
     ctx.translate(SIZES.center, SIZES.center);
     ctx.rotate(currentRotation);
+
+    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
+    const bleed = 6;
 
     for (let i = 0; i < sectors.length; i++) {
         const sector = sectors[i];
@@ -200,21 +204,21 @@ function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = 
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.sliceRadius, sector.startAngle, sector.endAngle);
+        ctx.arc(0, 0, SIZES.sliceRadius + bleed, sector.startAngle, sector.endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.mainRadius, sector.startAngle, sector.endAngle);
+        ctx.arc(0, 0, SIZES.mainRadius + bleed, sector.startAngle, sector.endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(SIZES.sliceRadius * Math.cos(sector.startAngle), SIZES.sliceRadius * Math.sin(sector.startAngle));
+        ctx.lineTo((SIZES.sliceRadius + bleed) * Math.cos(sector.startAngle), (SIZES.sliceRadius + bleed) * Math.sin(sector.startAngle));
         ctx.lineWidth = 2;
         ctx.strokeStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.stroke();

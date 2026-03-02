@@ -55,10 +55,10 @@ async function generateSpinGif(options) {
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1); 
-    encoder.setDelay(50);  
-    encoder.setQuality(10); 
+    encoder.setDelay(80);  
+    encoder.setQuality(30); 
 
-    const totalSpinFrames = 70; 
+    const totalSpinFrames = 40; 
 
     // Fase 1: Giro
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
@@ -73,7 +73,7 @@ async function generateSpinGif(options) {
 
     // Fase 2: Celebración
     const particles = createParticles();
-    const celebrationFrames = 30; 
+    const celebrationFrames = 15; 
 
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const highlight = (Math.floor(frame / 4) % 2 === 0) ? winnerIndex : -1;
@@ -125,10 +125,10 @@ async function generateWeightedSpinGif(parsedOptions) {
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1);
-    encoder.setDelay(50);
-    encoder.setQuality(10);
+    encoder.setDelay(80);
+    encoder.setQuality(30);
 
-    const totalSpinFrames = 70; 
+    const totalSpinFrames = 40; 
 
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
@@ -140,7 +140,7 @@ async function generateWeightedSpinGif(parsedOptions) {
     }
 
     const particles = createParticles();
-    const celebrationFrames = 30;
+    const celebrationFrames = 15;
 
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const highlight = (Math.floor(frame / 4) % 2 === 0) ? winnerIndex : -1;
