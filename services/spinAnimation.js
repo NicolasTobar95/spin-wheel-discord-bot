@@ -1,18 +1,16 @@
 const GIFEncoder = require('gif-encoder-2');
+const { Canvas } = require('skia-canvas'); // IMPORTAMOS CANVAS AQUÍ
 const { drawWheelFrame, drawWeightedWheelFrame } = require('./wheelGenerator.js');
 
-// Helper para crear confeti
 function createParticles() {
     const particles = [];
     const colors = ['#F4C025', '#CD273F', '#289CD1', '#A5CE40', '#873E92'];
-    
-    // ¡Aumentamos de 60 a 150 partículas!
     for(let i = 0; i < 150; i++) {
         particles.push({
             x: 200, 
             y: 200,
-            vx: (Math.random() - 0.5) * 35, // Explosión más ancha (antes 25)
-            vy: (Math.random() - 0.5) * 35 - 5, // Salta un poco más alto
+            vx: (Math.random() - 0.5) * 35, 
+            vy: (Math.random() - 0.5) * 35 - 5, 
             color: colors[Math.floor(Math.random() * colors.length)],
             size: Math.random() * 6 + 4,
             rotation: Math.random() * 360,
@@ -38,9 +36,6 @@ function drawParticles(ctx, particles) {
     });
 }
 
-/**
- * Genera el GIF animado de la ruleta y determina el ganador
- */
 async function generateSpinGif(options) {
     const numOptions = options.length;
     const winnerIndex = Math.floor(Math.random() * numOptions);
@@ -48,41 +43,42 @@ async function generateSpinGif(options) {
 
     const sectorAngle = (2 * Math.PI) / numOptions;
     const centerAngle = (winnerIndex * sectorAngle) + (sectorAngle / 2);
-    
     const vueltasCompletas = 4 * 2 * Math.PI;
     const finalRotation = vueltasCompletas + ((2 * Math.PI) - centerAngle);
 
     const size = 400;
+    
+    // 👑 OPTIMIZACIÓN: CREAMOS UN SOLO LIENZO MAESTRO 👑
+    const canvas = new Canvas(size, size);
+    const ctx = canvas.getContext('2d');
+    
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1); 
-    encoder.setDelay(50);  
-    encoder.setQuality(10); 
+    encoder.setDelay(80);  
+    encoder.setQuality(30); 
 
-    // Ajuste de tiempos: Freno más seco
-    const totalSpinFrames = 70; // (Antes 100) Frena a los 3.5 segundos
+    const totalSpinFrames = 40; 
 
-    // 1. Fase de giro
+    // Fase 1: Giro
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
         const ease = 1 - Math.pow(1 - progress, 4);
         const currentAngle = ease * finalRotation;
 
-        const canvas = drawWheelFrame(options, currentAngle);
-        const ctx = canvas.getContext('2d');
+        // Le pasamos el ctx a la función, ella lo limpia y dibuja encima
+        drawWheelFrame(ctx, options, currentAngle);
         encoder.addFrame(ctx);
     }
 
-    // 2. Fase de Celebración
+    // Fase 2: Celebración
     const particles = createParticles();
-    const celebrationFrames = 30; // 1.5 segundos de parpadeo y confeti
+    const celebrationFrames = 15; 
 
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const highlight = (Math.floor(frame / 4) % 2 === 0) ? winnerIndex : -1;
         
-        const canvas = drawWheelFrame(options, finalRotation, highlight);
-        const ctx = canvas.getContext('2d');
-        
+        drawWheelFrame(ctx, options, finalRotation, highlight);
         drawParticles(ctx, particles);
         encoder.addFrame(ctx);
     }
@@ -93,9 +89,6 @@ async function generateSpinGif(options) {
     return { buffer, winnerName };
 }
 
-/**
- * Genera el GIF para la ruleta con pesos
- */
 async function generateWeightedSpinGif(parsedOptions) {
     const totalWeight = parsedOptions.reduce((sum, opt) => sum + opt.weight, 0);
     
@@ -124,36 +117,35 @@ async function generateWeightedSpinGif(parsedOptions) {
     const finalRotation = vueltasCompletas + ((2 * Math.PI) - winner.centerAngle);
 
     const size = 400;
+    
+    // 👑 OPTIMIZACIÓN: UN SOLO LIENZO MAESTRO 👑
+    const canvas = new Canvas(size, size);
+    const ctx = canvas.getContext('2d');
+    
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1);
-    encoder.setDelay(50);
-    encoder.setQuality(10);
+    encoder.setDelay(80);
+    encoder.setQuality(30);
 
-    // Ajuste de tiempos: Freno más seco
-    const totalSpinFrames = 70; 
+    const totalSpinFrames = 40; 
 
-    // 1. Fase de giro
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
         const ease = 1 - Math.pow(1 - progress, 4); 
         const currentAnimAngle = ease * finalRotation;
 
-        const canvas = drawWeightedWheelFrame(sectors, currentAnimAngle);
-        const ctx = canvas.getContext('2d');
+        drawWeightedWheelFrame(ctx, sectors, currentAnimAngle);
         encoder.addFrame(ctx);
     }
 
-    // 2. Fase de Celebración
     const particles = createParticles();
-    const celebrationFrames = 30;
+    const celebrationFrames = 15;
 
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const highlight = (Math.floor(frame / 4) % 2 === 0) ? winnerIndex : -1;
         
-        const canvas = drawWeightedWheelFrame(sectors, finalRotation, highlight);
-        const ctx = canvas.getContext('2d');
-        
+        drawWeightedWheelFrame(ctx, sectors, finalRotation, highlight);
         drawParticles(ctx, particles);
         encoder.addFrame(ctx);
     }

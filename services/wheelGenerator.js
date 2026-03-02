@@ -1,6 +1,3 @@
-const { Canvas } = require('skia-canvas');
-
-// --- CONSTANTES DE DISEÑO ---
 const GLOBAL_COLORS = {
     outerBorder: '#394e63',   
     indicator: '#EBB31C',     
@@ -20,24 +17,16 @@ const SECTOR_COLORS = [
     { main: '#A5CE40', shadow: '#85A82B' }  
 ];
 
-// Medidas exactas escaladas a 400x400
 const SIZES = {
-    canvas: 400,
-    center: 200,
-    totalRadius: 170,     
-    borderWidth: 14,      
-    sliceRadius: 156,     
-    shadowWidth: 10,      
-    mainRadius: 146,      
-    centerRadius: 18,     
-    dotRadius: 4          
+    canvas: 400, center: 200, totalRadius: 170,     
+    borderWidth: 14, sliceRadius: 156, shadowWidth: 10,      
+    mainRadius: 146, centerRadius: 18, dotRadius: 4          
 };
 
 function getColorsForIndex(index) {
     return SECTOR_COLORS[index % SECTOR_COLORS.length];
 }
 
-// --- FUNCIÓN HÍBRIDA DE TEXTO (Auto-Shrink + Multi-línea) ---
 function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
     const maxWidth = 110; 
     const baseX = 90;     
@@ -49,13 +38,11 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
     let text = textRaw.toUpperCase().trim();
     ctx.font = `bold ${Math.floor(fontSize)}px "Segoe UI"`;
     
-    // 1. AUTO-SHRINK
     while (ctx.measureText(text).width > maxWidth && fontSize > minFontSize) {
         fontSize -= 1;
         ctx.font = `bold ${Math.floor(fontSize)}px "Segoe UI"`;
     }
 
-    // 2. TEXT-WRAPPING
     let lines = [text];
     const lineHeight = fontSize * 1.1;
     
@@ -77,7 +64,6 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         }
     }
 
-    // 3. TRUNCADO
     lines = lines.map(line => {
         let temp = line;
         if (ctx.measureText(temp).width > maxWidth) {
@@ -89,7 +75,6 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         return temp;
     });
 
-    // 4. APLICAR ESTILOS
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = isHighlighted ? '#000000' : GLOBAL_COLORS.text;
@@ -102,19 +87,18 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         ctx.shadowBlur = 0;
     }
 
+    // 👑 CORRECCIÓN VISUAL 2: Ajuste óptico hacia abajo (3 píxeles)
+    const yOffset = 0; 
+
     if (lines.length === 1) {
-        ctx.fillText(lines[0], baseX, 0); 
+        ctx.fillText(lines[0], baseX, yOffset); 
     } else {
-        ctx.fillText(lines[0], baseX, -lineHeight / 2); 
-        ctx.fillText(lines[1], baseX, lineHeight / 2);  
+        ctx.fillText(lines[0], baseX, (-lineHeight / 2) + yOffset); 
+        ctx.fillText(lines[1], baseX, (lineHeight / 2) + yOffset);  
     }
 }
 
-// --- FUNCIONES DE DIBUJO ---
-function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
-    const canvas = new Canvas(SIZES.canvas, SIZES.canvas);
-    const ctx = canvas.getContext('2d');
-
+function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
     ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
     ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
 
@@ -124,6 +108,9 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
 
     const numOptions = options.length;
     const sectorAngle = (2 * Math.PI) / numOptions;
+    
+    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
+    const bleed = 6; 
 
     for (let i = 0; i < numOptions; i++) {
         const baseColors = getColorsForIndex(i);
@@ -139,21 +126,21 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.sliceRadius, startAngle, endAngle);
+        ctx.arc(0, 0, SIZES.sliceRadius + bleed, startAngle, endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.mainRadius, startAngle, endAngle);
+        ctx.arc(0, 0, SIZES.mainRadius + bleed, startAngle, endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(SIZES.sliceRadius * Math.cos(startAngle), SIZES.sliceRadius * Math.sin(startAngle));
+        ctx.lineTo((SIZES.sliceRadius + bleed) * Math.cos(startAngle), (SIZES.sliceRadius + bleed) * Math.sin(startAngle));
         ctx.lineWidth = 2;
         ctx.strokeStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.stroke();
@@ -161,7 +148,6 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
         ctx.save();
         ctx.rotate((i * sectorAngle) + (sectorAngle / 2));
         
-        // Llamar a nuestra nueva función inteligente
         drawHybridText(ctx, options[i], sectorAngle, isHighlighted, 10);
         
         ctx.restore();
@@ -169,14 +155,12 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
     
     ctx.restore(); 
 
-    // Borde Exterior
     ctx.beginPath();
     ctx.arc(SIZES.center, SIZES.center, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
     ctx.lineWidth = SIZES.borderWidth;
     ctx.strokeStyle = GLOBAL_COLORS.outerBorder;
     ctx.stroke();
 
-    // Puntos
     for (let i = 0; i < numOptions; i++) {
         const startAngle = i * sectorAngle + currentRotation;
         ctx.beginPath();
@@ -186,7 +170,6 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
         ctx.fill();
     }
 
-    // Centro
     ctx.beginPath();
     ctx.arc(SIZES.center, SIZES.center, SIZES.centerRadius, 0, 2 * Math.PI);
     ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
@@ -196,19 +179,18 @@ function drawWheelFrame(options, currentRotation, highlightIndex = -1) {
     ctx.stroke();
 
     drawIndicator(ctx);
-    return canvas;
 }
 
-function drawWeightedWheelFrame(sectors, currentRotation, highlightIndex = -1) {
-    const canvas = new Canvas(SIZES.canvas, SIZES.canvas);
-    const ctx = canvas.getContext('2d');
-
+function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = -1) {
     ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
     ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
 
     ctx.save();
     ctx.translate(SIZES.center, SIZES.center);
     ctx.rotate(currentRotation);
+
+    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
+    const bleed = 6;
 
     for (let i = 0; i < sectors.length; i++) {
         const sector = sectors[i];
@@ -222,21 +204,21 @@ function drawWeightedWheelFrame(sectors, currentRotation, highlightIndex = -1) {
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.sliceRadius, sector.startAngle, sector.endAngle);
+        ctx.arc(0, 0, SIZES.sliceRadius + bleed, sector.startAngle, sector.endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.arc(0, 0, SIZES.mainRadius, sector.startAngle, sector.endAngle);
+        ctx.arc(0, 0, SIZES.mainRadius + bleed, sector.startAngle, sector.endAngle);
         ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(SIZES.sliceRadius * Math.cos(sector.startAngle), SIZES.sliceRadius * Math.sin(sector.startAngle));
+        ctx.lineTo((SIZES.sliceRadius + bleed) * Math.cos(sector.startAngle), (SIZES.sliceRadius + bleed) * Math.sin(sector.startAngle));
         ctx.lineWidth = 2;
         ctx.strokeStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.stroke();
@@ -246,7 +228,6 @@ function drawWeightedWheelFrame(sectors, currentRotation, highlightIndex = -1) {
         
         const currentSectorAngle = sector.endAngle - sector.startAngle;
         
-        // Solo dibujar el texto si el ángulo es lo suficientemente grande (evita manchas)
         if (currentSectorAngle > 0.08) {
             drawHybridText(ctx, sector.name, currentSectorAngle, isHighlighted, 8);
         }
@@ -281,7 +262,6 @@ function drawWeightedWheelFrame(sectors, currentRotation, highlightIndex = -1) {
     ctx.stroke();
 
     drawIndicator(ctx);
-    return canvas;
 }
 
 function drawIndicator(ctx) {
