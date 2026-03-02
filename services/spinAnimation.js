@@ -12,7 +12,6 @@ function createParticles() {
             vy: (Math.random() - 0.5) * 35 - 5, 
             color: colors[Math.floor(Math.random() * colors.length)],
             size: Math.random() * 6 + 4
-            // (Rotación eliminada para ahorrar 2,250 cálculos por frame)
         });
     }
     return particles;
@@ -24,16 +23,11 @@ function drawParticles(ctx, particles) {
         p.y += p.vy; 
         p.vy += 1.5; 
         ctx.fillStyle = p.color;
-        // Dibujo directo sin save(), translate() ni rotate()
         ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
     });
 }
 
 async function generateSpinGif(options) {
-    console.log(`\n========================================`);
-    console.log(`🚀 RENDERIZADO EXTREMO (ANTI-THROTTLING)...`);
-    console.time('⏱️ TIEMPO TOTAL');
-
     const numOptions = options.length;
     const winnerIndex = Math.floor(Math.random() * numOptions);
     const winnerName = options[winnerIndex];
@@ -45,11 +39,9 @@ async function generateSpinGif(options) {
 
     const size = 400;
     
-    console.time('  📸 1. Tomando fotos de Sprites');
     const normalSprite = createWheelSprite(options, -1);
     const highlightSprite = createWheelSprite(options, winnerIndex);
     const overlaySprite = createStaticOverlaySprite();
-    console.timeEnd('  📸 1. Tomando fotos de Sprites');
     
     const canvas = new Canvas(size, size);
     const ctx = canvas.getContext('2d');
@@ -57,12 +49,11 @@ async function generateSpinGif(options) {
     const encoder = new GIFEncoder(size, size);
     encoder.start();
     encoder.setRepeat(-1); 
-    encoder.setDelay(100);  // 10 FPS
+    encoder.setDelay(100); 
     encoder.setQuality(30); 
 
-    const totalSpinFrames = 25; // Reducido a 25 frames
+    const totalSpinFrames = 25; 
 
-    console.time('  🎡 2. Pegando Sprites de Giro');
     for (let frame = 0; frame <= totalSpinFrames; frame++) {
         const progress = frame / totalSpinFrames;
         const ease = 1 - Math.pow(1 - progress, 4);
@@ -80,12 +71,10 @@ async function generateSpinGif(options) {
         ctx.drawImage(overlaySprite, 0, 0); 
         encoder.addFrame(ctx);
     }
-    console.timeEnd('  🎡 2. Pegando Sprites de Giro');
 
     const particles = createParticles();
-    const celebrationFrames = 10; // Reducido a 10 frames
+    const celebrationFrames = 10; 
 
-    console.time('  🎉 3. Pegando Sprites de Celebración');
     for (let frame = 0; frame < celebrationFrames; frame++) {
         const isFlashing = (Math.floor(frame / 2) % 2 === 0);
         const activeSprite = isFlashing ? highlightSprite : normalSprite;
@@ -104,15 +93,9 @@ async function generateSpinGif(options) {
         
         encoder.addFrame(ctx);
     }
-    console.timeEnd('  🎉 3. Pegando Sprites de Celebración');
 
-    console.time('  💾 4. Compresión Final (Buffer)');
     encoder.finish();
     const buffer = encoder.out.getData();
-    console.timeEnd('  💾 4. Compresión Final (Buffer)');
-
-    console.timeEnd('⏱️ TIEMPO TOTAL');
-    console.log(`========================================\n`);
 
     return { buffer, winnerName };
 }

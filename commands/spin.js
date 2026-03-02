@@ -79,7 +79,7 @@ module.exports = {
                 } finally {
                     activeSpins.delete(channelId);
                 }
-            }, 5000);
+            }, 2900);
 
         } catch (error) {
             console.error(error);

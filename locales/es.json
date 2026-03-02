@@ -3,9 +3,9 @@
   "minOptions": "❌ Necesitas al menos 2 opciones para girar la ruleta.",
   "maxOptions": "❌ El máximo es de 20 opciones para que la ruleta sea legible.",
   "formatError": "❌ Error de formato en **\"{opt}\"**. Debes poner un número mayor a 0 al final (Ej: Carlos 3).",
-  "initialSpinning": "🎡 Girando la ruleta para: **{options}**...",
-  "calculating": "🎡 Calculando probabilidades ponderadas y girando...",
+  "initialSpinning": "🎡 Girando la ruleta para: {options}\n\n⏳ *Preparando los motores gráficos, esto tomará cerca de un minuto...*",
+  "calculating": "🎡 Calculando probabilidades ponderadas y girando...\n\n⏳ *Preparando los motores gráficos, esto tomará cerca de un minuto...*",
   "spinning": "🎡 **¡La ruleta está girando!** ¡Mucha suerte a todos!\n\n📋 **Resultados posibles:** {options}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-  "winner": "🎉 ¡La ruleta ha girado!\n🎯 **Ganador definitivo:** `{winner}`",
+  "winner": "🎉 ¡La ruleta ha girado! \n\n🏆 **Ganador definitivo:** `{winner}`!!!",
   "criticalError": "❌ Hubo un error crítico generando la ruleta."
 }

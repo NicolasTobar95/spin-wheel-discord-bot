@@ -30,12 +30,14 @@ function getColorsForIndex(index) {
 }
 
 function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
-    const maxWidth = 110; 
+    const maxWidth = 100; // Reducido levemente para mayor margen de seguridad
     const baseX = 90;     
     const maxFontSize = 24;
     
     const availableHeight = baseX * sectorAngle;
-    let fontSize = Math.min(maxFontSize, Math.max(minFontSize, availableHeight * 0.8));
+    
+    // 👑 CORRECCIÓN MATEMÁTICA: Usamos 0.45 en lugar de 0.8 para respetar la forma triangular
+    let fontSize = Math.min(maxFontSize, Math.max(minFontSize, availableHeight * 0.45));
     
     let text = textRaw.toUpperCase().trim();
     ctx.font = `bold ${Math.floor(fontSize)}px "Segoe UI"`;
@@ -48,7 +50,8 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
     let lines = [text];
     const lineHeight = fontSize * 1.1;
     
-    if (ctx.measureText(text).width > maxWidth && availableHeight >= lineHeight * 1.8) {
+    // 👑 CORRECCIÓN: Solo permite 2 líneas si hay espacio de sobra (2.5 veces la altura de la línea)
+    if (ctx.measureText(text).width > maxWidth && availableHeight >= lineHeight * 2.5) {
         const words = text.split(' ');
         if (words.length > 1) {
             let line1 = '';
