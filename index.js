@@ -24,7 +24,7 @@ for (const file of commandFiles) {
     }
 }
 
-client.once('clientReady', async () => {
+client.once('Ready', async () => {
     console.log(`✅ Bot conectado como ${client.user.tag}`);
 
     // 2. Registrar TODOS los comandos encontrados en Discord
@@ -69,4 +69,5 @@ http.createServer((req, res) => {
     res.end('Bot de Ruleta Activo\n');
 }).listen(port, () => {
     console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
+
 });
