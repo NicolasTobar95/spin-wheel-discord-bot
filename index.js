@@ -1,7 +1,3 @@
-// --- PARCHE DE RED PARA RENDER (FORZAR IPv4) ---
-const dns = require('node:dns');
-dns.setDefaultResultOrder('ipv4first');
-// --- CÓDIGO NORMAL ---
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
 const fs = require('fs');
@@ -19,7 +15,6 @@ for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     
-    // Verificar que el comando esté bien estructurado
     if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
         commandsToRegister.push(command.data.toJSON());
@@ -28,20 +23,20 @@ for (const file of commandFiles) {
     }
 }
 
-client.once('ready', async () => {
+// 2. Evento de inicio (Usando 'clientReady' correcto para evitar advertencias)
+client.once('clientReady', async () => {
     console.log(`✅ Bot conectado como ${client.user.tag}`);
 
-    // 2. Registrar TODOS los comandos encontrados en Discord
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     try {
         console.log(`Empezando a refrescar ${commandsToRegister.length} comandos de aplicación (/) ...`);
         await rest.put(
             Routes.applicationCommands(client.user.id),
-            { body: commandsToRegister }, // Enviamos el array con todos los comandos
+            { body: commandsToRegister }, 
         );
         console.log('✅ Comandos recargados exitosamente.');
     } catch (error) {
-        console.error(error);
+        console.error('❌ Error al recargar comandos:', error);
     }
 });
 
@@ -54,7 +49,7 @@ client.on('interactionCreate', async interaction => {
     try {
         await command.execute(interaction);
     } catch (error) {
-        console.error(error);
+        console.error('❌ Error ejecutando el comando:', error);
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({ content: 'Hubo un error al ejecutar el comando.', ephemeral: true });
         } else {
@@ -63,32 +58,18 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// --- ACTIVAR DEBUG DE RED ---
-client.on('debug', console.log);
-client.on('error', console.error);
-
-console.log("🔄 Intentando conectar a los servidores de Discord...");
-
-// Timeout de seguridad: Si en 15 segundos no conecta, que tire un error a la consola
-const timeoutAlarma = setTimeout(() => {
-    console.error("🚨 ALERTA: Pasaron 15 segundos y Discord no respondió. La red está bloqueada.");
-}, 15000);
-
-client.once('ready', () => {
-    clearTimeout(timeoutAlarma); // Apagar alarma si conecta bien
-});
-
+// 3. Conexión del Bot
 client.login(process.env.DISCORD_TOKEN).catch(error => {
     console.error("❌ ERROR CRÍTICO AL CONECTAR:", error);
 });
 
-// --- Servidor Web Dummy para Render ---
+// --- 4. Servidor Web Dummy para Health Checks de Koyeb ---
+// (Obligatorio mantenerlo para que Koyeb no reinicie el bot)
 const http = require('http');
 const port = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Bot de Ruleta Activo\n');
 }).listen(port, () => {
-    console.log(`✅ Servidor web encendido en el puerto ${port} (Render OK)`);
+    console.log(`✅ Servidor web encendido en el puerto ${port} (Koyeb OK)`);
 });
-
