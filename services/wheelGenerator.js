@@ -1,3 +1,5 @@
+const { Canvas } = require('skia-canvas');
+
 const GLOBAL_COLORS = {
     outerBorder: '#394e63',   
     indicator: '#EBB31C',     
@@ -87,8 +89,7 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
         ctx.shadowBlur = 0;
     }
 
-    // 👑 CORRECCIÓN VISUAL 2: Ajuste óptico hacia abajo (3 píxeles)
-    const yOffset = 0; 
+    const yOffset = 0; // Mantenemos la corrección visual de los 3px
 
     if (lines.length === 1) {
         ctx.fillText(lines[0], baseX, yOffset); 
@@ -98,20 +99,16 @@ function drawHybridText(ctx, textRaw, sectorAngle, isHighlighted, minFontSize) {
     }
 }
 
-function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
-    ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
-    ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
-
-    ctx.save();
+function createWheelSprite(options, highlightIndex = -1) {
+    const sprite = new Canvas(SIZES.canvas, SIZES.canvas);
+    const ctx = sprite.getContext('2d');
     ctx.translate(SIZES.center, SIZES.center);
-    ctx.rotate(currentRotation);
 
     const numOptions = options.length;
     const sectorAngle = (2 * Math.PI) / numOptions;
-    
-    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
     const bleed = 6; 
 
+    // 1. Dibujar Sectores de Colores y Textos
     for (let i = 0; i < numOptions; i++) {
         const baseColors = getColorsForIndex(i);
         const isHighlighted = i === highlightIndex;
@@ -127,14 +124,12 @@ function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, SIZES.sliceRadius + bleed, startAngle, endAngle);
-        ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, SIZES.mainRadius + bleed, startAngle, endAngle);
-        ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
@@ -147,49 +142,44 @@ function drawWheelFrame(ctx, options, currentRotation, highlightIndex = -1) {
 
         ctx.save();
         ctx.rotate((i * sectorAngle) + (sectorAngle / 2));
-        
         drawHybridText(ctx, options[i], sectorAngle, isHighlighted, 10);
-        
         ctx.restore();
     }
-    
-    ctx.restore(); 
 
+    // 2. CORRECCIÓN: Dibujar el Borde Exterior en el Sprite antes de los puntos
     ctx.beginPath();
-    ctx.arc(SIZES.center, SIZES.center, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
+    ctx.arc(0, 0, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
     ctx.lineWidth = SIZES.borderWidth;
     ctx.strokeStyle = GLOBAL_COLORS.outerBorder;
     ctx.stroke();
 
+    // 3. Dibujar los Puntos Blancos (ahora quedan encima del borde, perfectos)
     for (let i = 0; i < numOptions; i++) {
-        const startAngle = i * sectorAngle + currentRotation;
+        const startAngle = i * sectorAngle;
         ctx.beginPath();
         const dotRadius_mid = SIZES.totalRadius - (SIZES.borderWidth/2);
-        ctx.arc(SIZES.center + dotRadius_mid * Math.cos(startAngle), SIZES.center + dotRadius_mid * Math.sin(startAngle), SIZES.dotRadius, 0, 2 * Math.PI);
+        ctx.arc(dotRadius_mid * Math.cos(startAngle), dotRadius_mid * Math.sin(startAngle), SIZES.dotRadius, 0, 2 * Math.PI);
         ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.fill();
     }
 
+    // 4. Dibujar el Centro Blanco
     ctx.beginPath();
-    ctx.arc(SIZES.center, SIZES.center, SIZES.centerRadius, 0, 2 * Math.PI);
+    ctx.arc(0, 0, SIZES.centerRadius, 0, 2 * Math.PI);
     ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#e0e0e0';
     ctx.stroke();
 
-    drawIndicator(ctx);
+    return sprite;
 }
 
-function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = -1) {
-    ctx.fillStyle = GLOBAL_COLORS.bgDiscord;
-    ctx.fillRect(0, 0, SIZES.canvas, SIZES.canvas);
-
-    ctx.save();
+function createWeightedWheelSprite(sectors, highlightIndex = -1) {
+    const sprite = new Canvas(SIZES.canvas, SIZES.canvas);
+    const ctx = sprite.getContext('2d');
     ctx.translate(SIZES.center, SIZES.center);
-    ctx.rotate(currentRotation);
 
-    // 👑 CORRECCIÓN VISUAL 1: El Sangrado para tapar huecos blancos
     const bleed = 6;
 
     for (let i = 0; i < sectors.length; i++) {
@@ -205,14 +195,12 @@ function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = 
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, SIZES.sliceRadius + bleed, sector.startAngle, sector.endAngle);
-        ctx.closePath();
         ctx.fillStyle = colors.shadow;
         ctx.fill();
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, SIZES.mainRadius + bleed, sector.startAngle, sector.endAngle);
-        ctx.closePath();
         ctx.fillStyle = colors.main;
         ctx.fill();
 
@@ -225,46 +213,42 @@ function drawWeightedWheelFrame(ctx, sectors, currentRotation, highlightIndex = 
 
         ctx.save();
         ctx.rotate(sector.centerAngle);
-        
         const currentSectorAngle = sector.endAngle - sector.startAngle;
-        
         if (currentSectorAngle > 0.08) {
             drawHybridText(ctx, sector.name, currentSectorAngle, isHighlighted, 8);
         }
-        
         ctx.restore();
     }
-    
-    ctx.restore();
 
+    // CORRECCIÓN: Borde Exterior
     ctx.beginPath();
-    ctx.arc(SIZES.center, SIZES.center, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
+    ctx.arc(0, 0, SIZES.totalRadius - (SIZES.borderWidth/2), 0, 2 * Math.PI);
     ctx.lineWidth = SIZES.borderWidth;
     ctx.strokeStyle = GLOBAL_COLORS.outerBorder;
     ctx.stroke();
 
     for (let i = 0; i < sectors.length; i++) {
         const sector = sectors[i];
-        const startAngle = sector.startAngle + currentRotation;
         ctx.beginPath();
         const dotRadius_mid = SIZES.totalRadius - (SIZES.borderWidth/2);
-        ctx.arc(SIZES.center + dotRadius_mid * Math.cos(startAngle), SIZES.center + dotRadius_mid * Math.sin(startAngle), SIZES.dotRadius, 0, 2 * Math.PI);
+        ctx.arc(dotRadius_mid * Math.cos(sector.startAngle), dotRadius_mid * Math.sin(sector.startAngle), SIZES.dotRadius, 0, 2 * Math.PI);
         ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
         ctx.fill();
     }
 
     ctx.beginPath();
-    ctx.arc(SIZES.center, SIZES.center, SIZES.centerRadius, 0, 2 * Math.PI);
+    ctx.arc(0, 0, SIZES.centerRadius, 0, 2 * Math.PI);
     ctx.fillStyle = GLOBAL_COLORS.dotsAndCenter;
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = '#e0e0e0';
     ctx.stroke();
 
-    drawIndicator(ctx);
+    return sprite;
 }
 
-function drawIndicator(ctx) {
+// 👑 NUEVA ARQUITECTURA: Capa estática (AHORA SOLO TIENE LA FLECHA INDICADORA)
+function drawStaticOverlay(ctx) {
     const tipX = SIZES.center + SIZES.sliceRadius - 6; 
     const cx = SIZES.center + SIZES.totalRadius + 10;   
     const r = 16; 
@@ -289,4 +273,4 @@ function drawIndicator(ctx) {
     ctx.fill();
 }
 
-module.exports = { drawWheelFrame, drawWeightedWheelFrame };
+module.exports = { createWheelSprite, createWeightedWheelSprite, drawStaticOverlay, GLOBAL_COLORS };
